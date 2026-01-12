@@ -10,6 +10,8 @@ import {
   Package,
   Wallet,
   BarChart3,
+  ClipboardList,
+  Receipt,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
@@ -32,8 +34,10 @@ const Navbar = ({ isAuthenticated = false, user }) => {
   const isSalesActive = location.pathname.startsWith("/sales");
   const isInventoryActive = location.pathname.startsWith("/inventory");
   const isExpensesActive = location.pathname.startsWith("/expenses");
+  const isInvoicesActive = location.pathname.startsWith("/invoices");
+  const isReportsActive = location.pathname.startsWith("/reports");
 
-  /* Close dropdowns on outside click */
+  /* ================= CLOSE DROPDOWNS ON OUTSIDE CLICK ================= */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -227,6 +231,32 @@ const Navbar = ({ isAuthenticated = false, user }) => {
             </div>
           )}
         </div>
+
+        {/* ================= INVOICES ================= */}
+        <Link
+          to="/invoices"
+          className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
+            isInvoicesActive
+              ? "bg-white/10 text-primary"
+              : "text-white/70"
+          }`}
+        >
+          <Receipt className="w-6 h-6" />
+          <span className="text-[10px] uppercase">Invoices</span>
+        </Link>
+
+        {/* ================= REPORTS ================= */}
+        <Link
+          to="/reports"
+          className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
+            isReportsActive
+              ? "bg-white/10 text-primary"
+              : "text-white/70"
+          }`}
+        >
+          <ClipboardList className="w-6 h-6" />
+          <span className="text-[10px] uppercase">Reports</span>
+        </Link>
       </div>
 
       {/* ================= BOTTOM ================= */}
