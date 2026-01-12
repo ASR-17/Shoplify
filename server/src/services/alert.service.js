@@ -1,5 +1,5 @@
 import Product from "../models/product.model.js";
-import Expense from "../models/expense.model.js";
+import Expense from "../models/Expense.model.js";
 
 /**
  * Alert Service

@@ -1,4 +1,4 @@
-import Expense from "../models/expense.model.js";
+import Expense from "../models/Expense.model.js";
 import { getDateRanges } from "../utils/expenseSummary.js";
 
 // ➕ Add Expense
