@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import SaleForm from "@/components/sales/SaleForm";
 import { createSale } from "@/services/sale.service";
@@ -6,11 +7,11 @@ import AppLayout from "@/layouts/AppLayout";
 
 const AddSale = () => {
   const { toast } = useToast();
+  const navigate = useNavigate(); // ✅ routing
 
   const [formData, setFormData] = useState({
-    productId: "",        // ✅ CHANGED
+    productId: "",
     quantity: "",
-    pricePerItem: "",
     customerName: "",
     paymentType: "",
   });
@@ -20,22 +21,17 @@ const AddSale = () => {
 
     try {
       await createSale({
-        productId: formData.productId,          // ✅ REQUIRED
+        productId: formData.productId,
         quantity: Number(formData.quantity),
-        pricePerItem: Number(formData.pricePerItem),
-        customerName: formData.customerName,
+        customerName: formData.customerName || "",
         paymentType: formData.paymentType,
       });
 
       toast({ title: "Sale added successfully" });
 
-      setFormData({
-        productId: "",
-        quantity: "",
-        pricePerItem: "",
-        customerName: "",
-        paymentType: "",
-      });
+      // ✅ CLEAN REDIRECT (NO REFRESH HACKS)
+      navigate("/sales/records");
+
     } catch (err) {
       toast({
         title: "Error",

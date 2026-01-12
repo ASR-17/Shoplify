@@ -1,29 +1,21 @@
-import Sale from "../models/sale.model.js";
+import Sale from "../models/Sale.model.js";
 import Product from "../models/product.model.js";
+import Invoice from "../models/Invoice.model.js";
+import generateInvoiceNumber from "../utils/generateInvoiceNumber.js";
 
-/* ================================
-   CREATE SALE + AUTO STOCK DEDUCT
-================================ */
 export const createSale = async (req, res) => {
   try {
-    const {
-      productId,
-      quantity,
-      pricePerItem,
-      customerName,
-      paymentType,
-    } = req.body;
 
-    // 1️⃣ Validate product
+    const { productId, quantity, customerName, paymentType } = req.body;
+
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Product not found in inventory",
+        message: "Product not found",
       });
     }
 
-    // 2️⃣ Check stock
     if (product.quantity < quantity) {
       return res.status(400).json({
         success: false,
@@ -31,14 +23,19 @@ export const createSale = async (req, res) => {
       });
     }
 
-    // 3️⃣ Deduct stock
+    if (!product.sellingPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Product selling price not set",
+      });
+    }
+
     product.quantity -= quantity;
     await product.save();
 
-    // 4️⃣ Calculate total
+    const pricePerItem = product.sellingPrice;
     const totalAmount = quantity * pricePerItem;
 
-    // 5️⃣ Create sale
     const sale = await Sale.create({
       productId: product._id,
       productName: product.name,
@@ -50,17 +47,37 @@ export const createSale = async (req, res) => {
       createdBy: req.user.id,
     });
 
-    res.status(201).json({
-      success: true,
-      sale,
+    await Invoice.create({
+      sale: sale._id,
+      invoiceNumber: await generateInvoiceNumber(),
+      customerName: customerName || null,
+      items: [
+        {
+          productId: product._id,
+          productName: product.name,
+          quantity,
+          pricePerItem,
+          total: totalAmount,
+        },
+      ],
+      paymentType,
+      totalAmount,
+      createdBy: req.user.id,
+      createdAt: sale.createdAt,
     });
-  } catch (error) {
+
+    res.status(201).json({ success: true, sale });
+  } catch (err) {
+    console.error("Create sale error ❌", err);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
   }
 };
+
+
+
 
 /* ================================
    GET ALL SALES

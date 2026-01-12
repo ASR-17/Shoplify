@@ -1,8 +1,5 @@
-import { useMemo } from "react";
-import {
-  Package,
-  Calendar,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Package, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getProducts } from "@/services/product.service";
 
 const paymentTypes = [
   { value: "cash", label: "Cash" },
@@ -21,26 +19,40 @@ const paymentTypes = [
   { value: "other", label: "Other" },
 ];
 
-/**
- * ⚠️ TEMP DEMO DATA
- * Later you will replace this with inventory API data
- */
-const products = [
-  { _id: "1", name: "Wireless Headphones" },
-  { _id: "2", name: "Bluetooth Speaker" },
-  { _id: "3", name: "Smart Watch" },
-  { _id: "4", name: "USB-C Cable" },
-  { _id: "5", name: "Power Bank" },
-];
+const SaleForm = ({
+  formData = {},            // ✅ DEFAULT SAFETY
+  setFormData,
+  onSubmit,
+  submitLabel,
+}) => {
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
-const SaleForm = ({ formData, setFormData, onSubmit, submitLabel }) => {
+  /* ================= FETCH PRODUCTS ================= */
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        const data = await getProducts();
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load products", err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  /* ================= TOTAL CALC ================= */
   const totalAmount = useMemo(() => {
-    const qty = Number(formData.quantity) || 0;
-    const price = Number(formData.pricePerItem) || 0;
+    const qty = Number(formData.quantity || 0);
+    const price = Number(formData.pricePerItem || 0);
     return (qty * price).toFixed(2);
   }, [formData.quantity, formData.pricePerItem]);
 
-  const currentDate = new Date().toLocaleDateString("en-US", {
+  const currentDate = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -50,14 +62,14 @@ const SaleForm = ({ formData, setFormData, onSubmit, submitLabel }) => {
   return (
     <form onSubmit={onSubmit}>
       <div className="glass-card border border-white/10 rounded-2xl p-6 md:p-8 space-y-6">
-        
-        {/* Date */}
+
+        {/* ================= DATE ================= */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white/5 rounded-lg px-4 py-3 border border-white/10">
           <Calendar className="w-4 h-4 text-primary" />
           <span>{currentDate}</span>
         </div>
 
-        {/* Product */}
+        {/* ================= PRODUCT ================= */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Package className="w-4 h-4 text-primary" />
@@ -65,10 +77,11 @@ const SaleForm = ({ formData, setFormData, onSubmit, submitLabel }) => {
           </Label>
 
           <Select
-            value={formData.productId}
+            value={formData.productId ?? ""}
             onValueChange={(value) =>
               setFormData({ ...formData, productId: value })
             }
+            disabled={loadingProducts}
           >
             <SelectTrigger className="bg-white/5 border-white/20">
               <SelectValue placeholder="Select a product" />
@@ -84,29 +97,32 @@ const SaleForm = ({ formData, setFormData, onSubmit, submitLabel }) => {
           </Select>
         </div>
 
-        {/* Quantity + Price */}
+        {/* ================= QUANTITY + PRICE ================= */}
         <div className="flex flex-col md:flex-row gap-4">
           <Input
             type="number"
             min="1"
             placeholder="Quantity"
-            value={formData.quantity}
+            value={formData.quantity ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, quantity: e.target.value })
             }
+            required
           />
+
           <Input
             type="number"
             min="0"
             placeholder="Price per item"
-            value={formData.pricePerItem}
+            value={formData.pricePerItem ?? ""}
             onChange={(e) =>
               setFormData({ ...formData, pricePerItem: e.target.value })
             }
+            required
           />
         </div>
 
-        {/* Total */}
+        {/* ================= TOTAL ================= */}
         <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex justify-between">
           <span>Total Amount</span>
           <span className="text-xl font-bold text-primary">
@@ -114,18 +130,18 @@ const SaleForm = ({ formData, setFormData, onSubmit, submitLabel }) => {
           </span>
         </div>
 
-        {/* Customer */}
+        {/* ================= CUSTOMER ================= */}
         <Input
           placeholder="Customer name (optional)"
-          value={formData.customerName}
+          value={formData.customerName ?? ""}
           onChange={(e) =>
             setFormData({ ...formData, customerName: e.target.value })
           }
         />
 
-        {/* Payment */}
+        {/* ================= PAYMENT TYPE ================= */}
         <Select
-          value={formData.paymentType}
+          value={formData.paymentType ?? ""}
           onValueChange={(value) =>
             setFormData({ ...formData, paymentType: value })
           }
@@ -143,7 +159,7 @@ const SaleForm = ({ formData, setFormData, onSubmit, submitLabel }) => {
           </SelectContent>
         </Select>
 
-        {/* Submit */}
+        {/* ================= SUBMIT ================= */}
         <div className="flex justify-center pt-4">
           <Button type="submit" className="px-10">
             {submitLabel}
