@@ -1,4 +1,9 @@
 An enter prise level appliaction... only owner and employees can acess..
+i am providing the acess credentials not not the password..
+you can contact me for that. 
+name "Aditya Singh"
+email  "aditya@shopify.com"
+role "admin"
 a business manage system compatible of all the analysis amd sata required in an enterprise..
 details :- 
 
