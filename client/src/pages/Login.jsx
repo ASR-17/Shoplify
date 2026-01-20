@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Starfield from "../components/Starfield.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { Eye, EyeOff } from "lucide-react"; // ✅ add
 
 const Login = () => {
   const navigate = useNavigate();
@@ -10,17 +11,25 @@ const Login = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // ✅ add
   const [error, setError] = useState("");
+
+  // ✅ normalize base URL (remove trailing slash)
+  const RAW_BASE =
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000";
+  const BASE_URL = RAW_BASE.replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
-        { email, password }
-      );
+      const res = await axios.post(`${BASE_URL}/api/auth/login`, {
+        email,
+        password,
+      });
 
       login(res.data.token, res.data.user);
       navigate("/home");
@@ -46,11 +55,7 @@ const Login = () => {
             Welcome Back
           </h2>
 
-          {error && (
-            <p className="text-red-400 text-sm text-center mb-4">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-red-400 text-sm text-center mb-4">{error}</p>}
 
           {/* Email */}
           <div className="mb-4">
@@ -67,13 +72,26 @@ const Login = () => {
           {/* Password */}
           <div className="mb-6">
             <label className="block text-sm mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-md bg-transparent border border-white/50"
-            />
+
+            {/* ✅ wrapper for icon */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"} // ✅ toggle
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2 pr-12 rounded-md bg-transparent border border-white/50"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button className="w-full py-2 rounded-md bg-blue-500 hover:bg-blue-600 font-semibold">
