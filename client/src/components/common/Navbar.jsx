@@ -12,6 +12,7 @@ import {
   BarChart3,
   ClipboardList,
   Receipt,
+  Bell, // ✅ ADD
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
@@ -29,6 +30,9 @@ const Navbar = ({ isAuthenticated = false, user }) => {
 
   const menuRef = useRef(null);
 
+  // 🔔 TEMP (replace with NotificationContext later)
+  const unreadCount = 3;
+
   const isActive = (path) => location.pathname === path;
   const isDashboardActive = location.pathname === "/dashboard";
   const isSalesActive = location.pathname.startsWith("/sales");
@@ -36,8 +40,8 @@ const Navbar = ({ isAuthenticated = false, user }) => {
   const isExpensesActive = location.pathname.startsWith("/expenses");
   const isInvoicesActive = location.pathname.startsWith("/invoices");
   const isReportsActive = location.pathname.startsWith("/reports");
+  const isNotificationsActive = location.pathname.startsWith("/notifications");
 
-  /* ================= CLOSE DROPDOWNS ON OUTSIDE CLICK ================= */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -61,233 +65,114 @@ const Navbar = ({ isAuthenticated = false, user }) => {
   return (
     <nav
       ref={menuRef}
-      className="fixed left-0 top-0 h-full w-24 md:w-28 bg-white/5 backdrop-blur-md border-r border-white/10 flex flex-col justify-between py-6 z-[999]"
+      className="fixed left-0 top-0 h-full w-24 md:w-28 bg-white/5 backdrop-blur-md border-r border-white/10 flex flex-col justify-between py-5 z-[999]"
     >
       {/* ================= TOP ================= */}
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2">
         {/* Home */}
-        <Link
-          to="/home"
-          className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-            isActive("/home")
-              ? "bg-white/10 text-primary"
-              : "text-white/70"
-          }`}
-        >
-          <Home className="w-6 h-6" />
-          <span className="text-[10px] uppercase">Home</span>
-        </Link>
+        <NavIcon to="/home" active={isActive("/home")} icon={Home} label="Home" />
 
         {/* Dashboard */}
-        <Link
+        <NavIcon
           to="/dashboard"
-          className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-            isDashboardActive
-              ? "bg-white/10 text-primary"
-              : "text-white/70"
-          }`}
+          active={isDashboardActive}
+          icon={BarChart3}
+          label="Analytics"
+        />
+
+        {/* Sales */}
+        <NavDropdown
+          open={salesOpen}
+          setOpen={setSalesOpen}
+          active={isSalesActive}
+          icon={ShoppingCart}
+          label="Sales"
         >
-          <BarChart3 className="w-6 h-6" />
-          <span className="text-[10px] uppercase">Analytics</span>
-        </Link>
+          <DropdownLink to="/sales/add" icon={ShoppingCart} label="Add Sale" />
+          <DropdownLink to="/sales/records" icon={FileText} label="Records" />
+        </NavDropdown>
 
-        {/* ================= SALES ================= */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setSalesOpen(!salesOpen);
-              setInventoryOpen(false);
-              setExpensesOpen(false);
-            }}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-              isSalesActive
-                ? "bg-white/10 text-primary"
-                : "text-white/70"
-            }`}
-          >
-            <ShoppingCart className="w-6 h-6" />
-            <span className="text-[10px] uppercase flex items-center gap-1">
-              Sales
-              <ChevronDown
-                className={`w-3 h-3 transition ${
-                  salesOpen ? "rotate-180" : ""
-                }`}
-              />
-            </span>
-          </button>
+        {/* Inventory */}
+        <NavDropdown
+          open={inventoryOpen}
+          setOpen={setInventoryOpen}
+          active={isInventoryActive}
+          icon={Package}
+          label="Inventory"
+        >
+          <DropdownLink to="/inventory" icon={FileText} label="Products" />
+          <DropdownLink to="/inventory/add" icon={Package} label="Add Product" />
+        </NavDropdown>
 
-          {salesOpen && (
-            <div className="absolute left-full top-0 ml-2 w-44 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-lg">
-              <Link
-                to="/sales/add"
-                onClick={() => setSalesOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                Add Sale
-              </Link>
-              <Link
-                to="/sales/records"
-                onClick={() => setSalesOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-              >
-                <FileText className="w-4 h-4" />
-                Records
-              </Link>
-            </div>
-          )}
-        </div>
+        {/* Expenses */}
+        <NavDropdown
+          open={expensesOpen}
+          setOpen={setExpensesOpen}
+          active={isExpensesActive}
+          icon={Wallet}
+          label="Expenses"
+        >
+          <DropdownLink to="/expenses" icon={FileText} label="Overview" />
+          <DropdownLink to="/expenses/add" icon={Wallet} label="Add Expense" />
+        </NavDropdown>
 
-        {/* ================= INVENTORY ================= */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setInventoryOpen(!inventoryOpen);
-              setSalesOpen(false);
-              setExpensesOpen(false);
-            }}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-              isInventoryActive
-                ? "bg-white/10 text-primary"
-                : "text-white/70"
-            }`}
-          >
-            <Package className="w-6 h-6" />
-            <span className="text-[10px] uppercase flex items-center gap-1">
-              Inventory
-              <ChevronDown
-                className={`w-3 h-3 transition ${
-                  inventoryOpen ? "rotate-180" : ""
-                }`}
-              />
-            </span>
-          </button>
-
-          {inventoryOpen && (
-            <div className="absolute left-full top-0 ml-2 w-44 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-lg">
-              <Link
-                to="/inventory"
-                onClick={() => setInventoryOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-              >
-                <FileText className="w-4 h-4" />
-                Products
-              </Link>
-              <Link
-                to="/inventory/add"
-                onClick={() => setInventoryOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-              >
-                <Package className="w-4 h-4" />
-                Add Product
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* ================= EXPENSES ================= */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setExpensesOpen(!expensesOpen);
-              setSalesOpen(false);
-              setInventoryOpen(false);
-            }}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-              isExpensesActive
-                ? "bg-white/10 text-primary"
-                : "text-white/70"
-            }`}
-          >
-            <Wallet className="w-6 h-6" />
-            <span className="text-[10px] uppercase flex items-center gap-1">
-              Expenses
-              <ChevronDown
-                className={`w-3 h-3 transition ${
-                  expensesOpen ? "rotate-180" : ""
-                }`}
-              />
-            </span>
-          </button>
-
-          {expensesOpen && (
-            <div className="absolute left-full top-0 ml-2 w-44 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-lg">
-              <Link
-                to="/expenses"
-                onClick={() => setExpensesOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-              >
-                <FileText className="w-4 h-4" />
-                Overview
-              </Link>
-              <Link
-                to="/expenses/add"
-                onClick={() => setExpensesOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-              >
-                <Wallet className="w-4 h-4" />
-                Add Expense
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* ================= INVOICES ================= */}
-        <Link
+        {/* Invoices */}
+        <NavIcon
           to="/invoices"
-          className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-            isInvoicesActive
-              ? "bg-white/10 text-primary"
-              : "text-white/70"
-          }`}
-        >
-          <Receipt className="w-6 h-6" />
-          <span className="text-[10px] uppercase">Invoices</span>
-        </Link>
+          active={isInvoicesActive}
+          icon={Receipt}
+          label="Invoices"
+        />
 
-        {/* ================= REPORTS ================= */}
-        <Link
+        {/* Reports */}
+        <NavIcon
           to="/reports"
-          className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-            isReportsActive
+          active={isReportsActive}
+          icon={ClipboardList}
+          label="Reports"
+        />
+
+        {/* 🔔 NOTIFICATIONS */}
+        <Link
+          to="/notifications"
+          className={`relative flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
+            isNotificationsActive
               ? "bg-white/10 text-primary"
               : "text-white/70"
           }`}
         >
-          <ClipboardList className="w-6 h-6" />
-          <span className="text-[10px] uppercase">Reports</span>
+          <Bell className="w-5 h-5" />
+          <span className="text-[10px] uppercase">Alerts</span>
+
+          {unreadCount > 0 && (
+            <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold">
+              {unreadCount}
+            </span>
+          )}
         </Link>
       </div>
 
       {/* ================= BOTTOM ================= */}
       <div className="relative flex flex-col items-center gap-4">
         {!isAuthenticated ? (
-          <Link
+          <NavIcon
             to="/login"
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
-              isActive("/login")
-                ? "bg-white/10 text-primary"
-                : "text-white/70"
-            }`}
-          >
-            <LogIn className="w-5 h-5" />
-            <span className="text-[10px] uppercase">Login</span>
-          </Link>
+            active={isActive("/login")}
+            icon={LogIn}
+            label="Login"
+            small
+          />
         ) : (
           <>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10"
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center border border-white/20 overflow-hidden">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center border border-white/20 overflow-hidden">
                 {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    className="w-full h-full object-cover"
-                    alt="profile"
-                  />
+                  <img src={user.avatar} className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-6 h-6 text-white" />
+                  <User className="w-5 h-5 text-white" />
                 )}
               </div>
               <p className="text-[9px] truncate max-w-16">{user?.name}</p>
@@ -295,14 +180,7 @@ const Navbar = ({ isAuthenticated = false, user }) => {
 
             {profileOpen && (
               <div className="absolute bottom-24 left-24 w-44 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-lg">
-                <Link
-                  to="/settings"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </Link>
+                <DropdownLink to="/settings" icon={Settings} label="Settings" />
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-white/10"
@@ -318,5 +196,54 @@ const Navbar = ({ isAuthenticated = false, user }) => {
     </nav>
   );
 };
+
+/* ================= HELPERS ================= */
+
+const NavIcon = ({ to, active, icon: Icon, label, small }) => (
+  <Link
+    to={to}
+    className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
+      active ? "bg-white/10 text-primary" : "text-white/70"
+    }`}
+  >
+    <Icon className={small ? "w-4.5 h-4.5" : "w-5 h-5"} />
+    <span className="text-[10px] uppercase">{label}</span>
+  </Link>
+);
+
+const NavDropdown = ({ open, setOpen, active, icon: Icon, label, children }) => (
+  <div className="relative">
+    <button
+      onClick={() => setOpen(!open)}
+      className={`flex flex-col items-center gap-1 p-3 rounded-xl transition hover:bg-white/10 ${
+        active ? "bg-white/10 text-primary" : "text-white/70"
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+      <span className="text-[10px] uppercase flex items-center gap-1">
+        {label}
+        <ChevronDown
+          className={`w-2.5 h-2.5 transition ${open ? "rotate-180" : ""}`}
+        />
+      </span>
+    </button>
+
+    {open && (
+      <div className="absolute left-full top-0 ml-2 w-44 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-lg">
+        {children}
+      </div>
+    )}
+  </div>
+);
+
+const DropdownLink = ({ to, icon: Icon, label }) => (
+  <Link
+    to={to}
+    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/10"
+  >
+    <Icon className="w-4 h-4" />
+    {label}
+  </Link>
+);
 
 export default Navbar;

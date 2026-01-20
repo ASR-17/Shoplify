@@ -1,10 +1,18 @@
 import { Link } from "react-router-dom";
 import { LogIn, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useSettings } from "@/context/SettingsContext";
 import AppLayout from "@/layouts/AppLayout";
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
+  const { store, branding } = useSettings();
+
+  // ✅ prevent blob URL errors after refresh
+  const logoUrl =
+    branding?.logoUrl && !branding.logoUrl.startsWith("blob:")
+      ? branding.logoUrl
+      : "";
 
   return (
     <AppLayout>
@@ -14,12 +22,31 @@ const Home = () => {
             /* Logged-out State */
             <div className="text-center space-y-8 animate-fade-in">
               <div className="space-y-4">
+                {/* ✅ Show store logo if available (only real URL) */}
+                {logoUrl ? (
+                  <div className="flex justify-center">
+                    <img
+                      src={logoUrl}
+                      alt="Store logo"
+                      className="h-16 w-16 object-contain rounded-xl border border-white/10 bg-white/5 p-2"
+                    />
+                  </div>
+                ) : null}
+
                 <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-primary to-secondary bg-clip-text text-transparent">
-                  Welcome to Shopify
+                  {store?.storeName ? store.storeName : "Welcome to Shopify"}
                 </h1>
+
                 <p className="text-white/60 text-lg">
                   Smart Inventory, Sales & Analytics Management
                 </p>
+
+                {/* ✅ Optional footer text */}
+                {branding?.invoiceFooterText ? (
+                  <p className="text-white/50 text-sm">
+                    {branding.invoiceFooterText}
+                  </p>
+                ) : null}
               </div>
 
               {/* Login Button */}
@@ -41,11 +68,18 @@ const Home = () => {
           ) : (
             /* Logged-in State */
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center space-y-6 animate-fade-in">
-              {/* Avatar */}
+              {/* Avatar / Logo */}
               <div className="flex justify-center">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary via-secondary to-primary p-1 shadow-[0_0_30px_rgba(100,200,255,0.3)]">
                   <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
-                    {user?.avatar ? (
+                    {/* ✅ Prefer store logo (only real URL) */}
+                    {logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt="Store logo"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : user?.avatar ? (
                       <img
                         src={user.avatar}
                         alt="Profile"
@@ -58,14 +92,22 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* User Info */}
-              <div className="space-y-3 text-white/70">
+              {/* ✅ Store + Admin Info */}
+              <div className="space-y-2 text-white/70">
                 <p className="text-lg font-semibold text-white">
-                  {user?.name}
+                  {store?.storeName || "My Store"}
                 </p>
-                <p className="text-sm uppercase tracking-wide">
-                  {user?.role}
+
+                <p className="text-sm text-white/60">
+                  Admin: <span className="text-white">{user?.name || "—"}</span>
                 </p>
+
+                <p className="text-sm uppercase tracking-wide">{user?.role}</p>
+
+                {/* ✅ Optional store address */}
+                {store?.storeAddress ? (
+                  <p className="text-xs text-white/50">{store.storeAddress}</p>
+                ) : null}
               </div>
 
               {/* Glow */}

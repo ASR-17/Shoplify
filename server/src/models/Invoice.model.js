@@ -104,8 +104,6 @@ invoiceSchema.pre("save", function (next) {
   if (calculatedTotal !== this.totalAmount) {
     return next(new Error("Invoice total mismatch"));
   }
-
-  next();
 });
 
 const Invoice =
