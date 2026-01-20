@@ -13,7 +13,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 
 /* ================= FEATURE PAGES ================= */
-import Reports from "./pages/reports";
+import Reports from "./pages/Reports";
 import Invoices from "./pages/Invoices";
 import Notifications from "./pages/Notifications";
 
