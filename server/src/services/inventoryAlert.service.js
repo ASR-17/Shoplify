@@ -1,7 +1,7 @@
 // server/src/services/inventoryAlert.service.js
 import JobRun from "../models/JobRun.model.js";
 import Notification from "../models/Notification.model.js";
-import Product from "../models/Product.model.js";
+import Product from "../models/product.model.js";
 import User from "../models/User.model.js"; // ✅ adjust path if different
 
 const DEFAULT_LOW_STOCK_THRESHOLD = 5;
