@@ -164,7 +164,6 @@ const InvoicePreview = ({
     </div>
   </div>
 </DialogContent>
-
     </Dialog>
   );
 };
