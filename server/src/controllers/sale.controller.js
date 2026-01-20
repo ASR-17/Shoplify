@@ -1,4 +1,4 @@
-import Sale from "../models/Sale.model.js";
+import Sale from "../models/sale.model.js";
 import Product from "../models/product.model.js";
 import Invoice from "../models/Invoice.model.js";
 import generateInvoiceNumber from "../utils/generateInvoiceNumber.js";

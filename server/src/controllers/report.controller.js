@@ -1,5 +1,5 @@
-import Expense from "../models/Expense.model.js";
-import Sale from "../models/Sale.model.js";
+import Expense from "../models/expense.model.js";
+import Sale from "../models/sale.model.js";
 import { exportCSV } from "../utils/csvExport.js";
 import { exportExcel } from "../utils/excelExport.js";
 import { exportPDF } from "../utils/pdfExport.js";
