@@ -24,12 +24,16 @@ import errorMiddleware from "./middlewares/error.middleware.js";
 const app = express();
 
 /* ================= CORS ================= */
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-  })
-);
+const allowed = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    return allowed.includes(origin) ? cb(null, true) : cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
+
 
 /* ================= BODY PARSER ================= */
 app.use(express.json());
