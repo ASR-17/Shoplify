@@ -3,9 +3,18 @@ import Product from "../models/product.model.js";
 import Invoice from "../models/Invoice.model.js";
 import generateInvoiceNumber from "../utils/generateInvoiceNumber.js";
 
+/* 🔔 NOTIFICATIONS */
+import {
+  notifyNewSale,
+  notifyInvoiceGenerated,
+  notifyLowStock,
+} from "../utils/notificationTriggers.js";
+
+/* ================================
+   CREATE SALE + INVOICE + NOTIFY
+================================ */
 export const createSale = async (req, res) => {
   try {
-
     const { productId, quantity, customerName, paymentType } = req.body;
 
     const product = await Product.findById(productId);
@@ -30,12 +39,14 @@ export const createSale = async (req, res) => {
       });
     }
 
+    /* 🔻 Deduct stock */
     product.quantity -= quantity;
     await product.save();
 
     const pricePerItem = product.sellingPrice;
     const totalAmount = quantity * pricePerItem;
 
+    /* 🧾 Create Sale */
     const sale = await Sale.create({
       productId: product._id,
       productName: product.name,
@@ -47,7 +58,8 @@ export const createSale = async (req, res) => {
       createdBy: req.user.id,
     });
 
-    await Invoice.create({
+    /* 📄 Create Invoice */
+    const invoice = await Invoice.create({
       sale: sale._id,
       invoiceNumber: await generateInvoiceNumber(),
       customerName: customerName || null,
@@ -66,6 +78,14 @@ export const createSale = async (req, res) => {
       createdAt: sale.createdAt,
     });
 
+    /* 🔔 NOTIFICATIONS */
+    await notifyNewSale(sale);
+    await notifyInvoiceGenerated(invoice);
+
+    if (product.quantity <= 5) {
+      await notifyLowStock(product, req.user.id);
+    }
+
     res.status(201).json({ success: true, sale });
   } catch (err) {
     console.error("Create sale error ❌", err);
@@ -75,9 +95,6 @@ export const createSale = async (req, res) => {
     });
   }
 };
-
-
-
 
 /* ================================
    GET ALL SALES
@@ -142,7 +159,6 @@ export const updateSale = async (req, res) => {
 
     const { quantity, pricePerItem } = req.body;
 
-    // 🔁 Inventory adjustment
     if (
       quantity !== undefined &&
       quantity !== existingSale.quantity &&
@@ -169,7 +185,6 @@ export const updateSale = async (req, res) => {
       await product.save();
     }
 
-    // 🔢 Recalculate total
     const finalQuantity = quantity ?? existingSale.quantity;
     const finalPrice = pricePerItem ?? existingSale.pricePerItem;
     const totalAmount = finalQuantity * finalPrice;
@@ -209,7 +224,6 @@ export const deleteSale = async (req, res) => {
       });
     }
 
-    // ♻️ Restore stock
     if (sale.productId) {
       const product = await Product.findById(sale.productId);
       if (product) {
