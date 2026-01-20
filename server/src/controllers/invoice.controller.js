@@ -1,5 +1,5 @@
 import Invoice from "../models/Invoice.model.js";
-import Sale from "../models/Sale.model.js";
+import Sale from "../models/sale.model.js";
 import { createInvoiceFromSale } from "../services/invoice.service.js";
 import { generateInvoicePDF } from "../services/pdf.service.js";
 

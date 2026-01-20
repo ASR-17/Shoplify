@@ -1,5 +1,5 @@
-import Sale from "../models/Sale.model.js";
-import Expense from "../models/Expense.model.js";
+import Sale from "../models/sale.model.js";
+import Expense from "../models/expense.model.js";
 import alertService from "./alert.service.js";
 import mongoose from "mongoose";
 import { getDateRangeFilter } from "../utils/dateRange.util.js";
