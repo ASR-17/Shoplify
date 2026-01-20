@@ -6,7 +6,7 @@ import { SettingsProvider } from "./context/SettingsContext"; // ✅ ADD
 /* ================= PUBLIC PAGES ================= */
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Signup from "./pages/SignUp";
 
 /* ================= CORE PAGES ================= */
 import Home from "./pages/Home";
