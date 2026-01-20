@@ -2,7 +2,7 @@ import axios from "axios";
 
 // ✅ normalize base URL (remove trailing slash)
 const RAW_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 const BASE_URL = RAW_BASE.replace(/\/$/, "");
 
 const api = axios.create({
