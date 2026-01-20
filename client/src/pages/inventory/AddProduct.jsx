@@ -168,7 +168,7 @@ const AddProduct = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-950/80 text-white border border-white/10 backdrop-blur-md">
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}

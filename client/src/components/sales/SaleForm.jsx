@@ -87,7 +87,7 @@ const SaleForm = ({
               <SelectValue placeholder="Select a product" />
             </SelectTrigger>
 
-            <SelectContent className="bg-white text-black">
+            <SelectContent className="bg-gray/80 text-white border border-white/10 backdrop-blur-md">
               {products.map((p) => (
                 <SelectItem key={p._id} value={p._id}>
                   {p.name}
@@ -150,7 +150,7 @@ const SaleForm = ({
             <SelectValue placeholder="Payment type" />
           </SelectTrigger>
 
-          <SelectContent className="bg-white text-black">
+          <SelectContent className="bg-gray/80 text-white border border-white/10 backdrop-blur-md">
             {paymentTypes.map((p) => (
               <SelectItem key={p.value} value={p.value}>
                 {p.label}

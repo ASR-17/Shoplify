@@ -161,7 +161,7 @@ const AddExpense = () => {
                   <SelectTrigger className="bg-white/5 border-white/20">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-950/80 text-white border border-white/10 backdrop-blur-md">
                     {categories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       {cat.label}
