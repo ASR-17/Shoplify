@@ -162,6 +162,7 @@ const InvoicesTable = ({
                       <Download className="w-4 h-4" />
                     </Button>
 
+                    {/* ✅ FIX: Desktop Share Dropdown Menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -173,17 +174,17 @@ const InvoicesTable = ({
                         </Button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="bg-[#0f172a] border border-white/10 shadow-xl z-50">
                         <DropdownMenuItem
-                          onClick={() => onShare(invoice)}
+                          className="cursor-pointer hover:bg-white/5 p-2"
+                          onClick={() => onShare(invoice, "whatsapp")}
                         >
-                          <span className="text-green-500 mr-2">
-                            📱
-                          </span>
+                          <span className="text-green-500 mr-2">📱</span>
                           Share via WhatsApp
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onShare(invoice)}
+                          className="cursor-pointer hover:bg-white/5 p-2"
+                          onClick={() => onShare(invoice, "email")}
                         >
                           <span className="mr-2">📧</span>
                           Share via Email
@@ -270,6 +271,7 @@ const InvoicesTable = ({
                 <Download className="w-3.5 h-3.5" />
               </Button>
 
+              {/* ✅ FIX: Mobile Share Dropdown Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -281,17 +283,17 @@ const InvoicesTable = ({
                   </Button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="bg-[#0f172a] border border-white/10 shadow-xl z-50">
                   <DropdownMenuItem
-                    onClick={() => onShare(invoice)}
+                    className="cursor-pointer hover:bg-white/5 p-2"
+                    onClick={() => onShare(invoice, "whatsapp")}
                   >
-                    <span className="text-green-500 mr-2">
-                      📱
-                    </span>
+                    <span className="text-green-500 mr-2">📱</span>
                     WhatsApp
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => onShare(invoice)}
+                    className="cursor-pointer hover:bg-white/5 p-2"
+                    onClick={() => onShare(invoice, "email")}
                   >
                     <span className="mr-2">📧</span>
                     Email

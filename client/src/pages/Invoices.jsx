@@ -101,7 +101,10 @@ const Invoices = () => {
           <InvoicesTable
             invoices={invoices}
             onView={openPreview}
-            onPrint={printInvoice}
+            onPrint={(invoice) => {
+              openPreview(invoice); // Pehle popup kholenge
+              setTimeout(() => window.print(), 300); // 0.3 sec baad print command bhejenge
+            }}
             onDownload={downloadInvoice}
             onShare={shareInvoice}
             currentPage={currentPage}
@@ -125,39 +128,54 @@ const Invoices = () => {
         </div>
 
         {/* ================= PRINT STYLES ================= */}
-<style>{`
-@media print {
-  @page {
-    size: A4;
-    margin: 20mm;
-  }
+        <style>{`
+          @media print {
+            @page {
+              size: A4;
+              margin: 0; /* Extra blank page hatane ke liye margin 0 */
+            }
 
-  body {
-    background: white !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+            body {
+              background: white !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
 
-  body * {
-    visibility: hidden;
-  }
+            body * {
+              visibility: hidden;
+            }
 
-  #invoice-print, #invoice-print * {
-    visibility: visible;
-  }
+            #invoice-print, #invoice-print * {
+              visibility: visible;
+            }
 
-  #invoice-print {
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    box-shadow: none !important;
-  }
+            div[role="dialog"], div[data-state="open"] {
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
+              transform: none !important;
+              width: 100% !important;
+              height: 100% !important;
+              overflow: hidden !important;
+            }
 
-  button, nav, header, footer {
-    display: none !important;
-  }
-}
-`}</style>
+            #invoice-print {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              box-shadow: none !important;
+              margin: 0 !important;
+              padding: 15mm !important; /* Page ke andar padding */
+              page-break-after: avoid; /* Extra page rokne ke liye */
+              page-break-before: avoid;
+            }
+
+            button, nav, header, footer {
+              display: none !important;
+            }
+          }
+        `}</style>
 
 
       </div>

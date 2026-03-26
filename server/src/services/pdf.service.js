@@ -12,11 +12,13 @@ export const generateInvoicePDF = (res, invoice) => {
 
   doc.pipe(res);
 
+  // ✅ FIX: Dummy data hata kar real Shop Details daal di hain
   const shopDetails = {
-    name: "Your Shop Name",
-    address: "Your Address",
-    phone: "Phone Number",
-    email: "Email",
+    name: "Tech Galaxy Store",
+    address: "123 Main Street, Mumbai - 400001",
+    phone: "+91 98765 43210",
+    email: "contact@techgalaxy.com",
+    gstNumber: "27AABCU9603R1ZM",
   };
 
   drawInvoiceTemplate(doc, invoice, shopDetails);
