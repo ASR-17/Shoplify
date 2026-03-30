@@ -120,8 +120,23 @@ const applyFilters = (filters = {}) => {
   };
 
   const shareInvoice = async (invoice, method) => {
-    if (!invoice?._id) return;
-    await invoiceService.shareInvoice(invoice._id, method);
+    if (!invoice) return;
+
+    const message = `Hello! Thank you for shopping with us.\n\nHere are your invoice details:\nInvoice No: ${invoice.invoiceNumber}\nDate: ${new Date(invoice.createdAt).toLocaleDateString()}\nTotal Amount: ₹${invoice.totalAmount}\nPayment Mode: ${invoice.paymentType.toUpperCase()}\n\nHave a great day!`;
+    
+    const encodedMessage = encodeURIComponent(message);
+
+    if (method === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+    } else if (method === "email") {
+      window.open(`mailto:?subject=Your Invoice - ${invoice.invoiceNumber}&body=${encodedMessage}`);
+    } else {
+      try {
+        await invoiceService.shareInvoice(invoice._id, method);
+      } catch (err) {
+        console.error("Share failed", err);
+      }
+    }
   };
 
   /* ================= EFFECT ================= */

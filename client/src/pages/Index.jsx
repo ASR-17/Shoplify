@@ -32,7 +32,7 @@ const Index = () => {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider mb-6 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            SHOPIFY
+            SHOPLIFY
           </h1>
           <p className="text-lg md:text-xl text-slate-300/80 tracking-wide">
             Intelligent Inventory, Sales & Business Insights
