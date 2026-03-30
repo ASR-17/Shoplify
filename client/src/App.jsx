@@ -10,7 +10,7 @@ import Signup from "./pages/SignUp";
 
 /* ================= CORE PAGES ================= */
 import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Analytics";
 
 /* ================= FEATURE PAGES ================= */
 import Reports from "./pages/Reports";

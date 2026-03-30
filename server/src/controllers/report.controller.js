@@ -1,44 +1,88 @@
-import Expense from "../models/expense.model.js";
 import Sale from "../models/sale.model.js";
+import Expense from "../models/expense.model.js";
+import mongoose from "mongoose";
+import alertService from "../services/alert.service.js";
+import { normalizeAmount } from "../utils/currency.util.js";
 import { exportCSV } from "../utils/csvExport.js";
 import { exportExcel } from "../utils/excelExport.js";
 import { exportPDF } from "../utils/pdfExport.js";
 
 /* =========================================================
-   GET /api/reports  ✅ (MAIN AGGREGATED ENDPOINT)
+   DATE RANGE HELPER
+   Supports: today | this-week | this-month | this-year
    ========================================================= */
+const buildDateFilter = (dateRange) => {
+  const now = new Date();
+  let start;
 
+  switch (dateRange) {
+    case "today":
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      break;
+    case "this-week": {
+      const day = now.getDay(); // 0 = Sun
+      start = new Date(now);
+      start.setDate(now.getDate() - day);
+      start.setHours(0, 0, 0, 0);
+      break;
+    }
+    case "this-month":
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case "this-year":
+      start = new Date(now.getFullYear(), 0, 1);
+      break;
+    default:
+      return {}; // no filter
+  }
+
+  return { $gte: start, $lte: now };
+};
+
+/* =========================================================
+   GET /api/reports   ← SINGLE MASTER ENDPOINT
+   ========================================================= */
 export const getReports = async (req, res, next) => {
   try {
+    const userId = req.user?._id || req.user?.id;
+    const {
+      reportType    = "sales",
+      dateRange     = "this-month",
+      page          = 1,
+      sortColumn    = "date",
+      sortDirection = "desc",
+    } = req.query;
 
-    const sales = await Sale.find().populate("createdBy", "name");
-    const expenses = await Expense.find().populate("createdBy", "name");
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const dateFilter   = buildDateFilter(dateRange);
+    const hasDate      = Object.keys(dateFilter).length > 0;
 
-    /* ================= SUMMARY ================= */
-    const totalSales = sales.reduce(
-      (sum, s) => sum + s.totalAmount,
-      0
-    );
+    const baseMatch = (dateField) => ({
+      createdBy: userObjectId,
+      ...(hasDate && { [dateField]: dateFilter }),
+    });
 
-    const totalExpenses = expenses.reduce(
-      (sum, e) => sum + e.amount,
-      0
-    );
+    /* ========== FETCH ========== */
+    const [sales, expenses] = await Promise.all([
+      Sale.find(baseMatch("createdAt")).populate("createdBy", "name role"),
+      Expense.find(baseMatch("createdAt")).populate("createdBy", "name role"),
+    ]);
 
-    /* ================= TIME SERIES ================= */
-    const salesByDate = {};
+    /* ========== KPIs ========== */
+    const totalSales    = normalizeAmount(sales.reduce((s, x) => s + (x.totalAmount || 0), 0));
+    const totalExpenses = normalizeAmount(expenses.reduce((s, x) => s + (x.amount || 0), 0));
+
+    /* ========== TIME SERIES ========== */
+    const salesByDate   = {};
     const expensesByDate = {};
 
     sales.forEach((s) => {
-      const date = s.soldAt.toISOString().split("T")[0];
-      salesByDate[date] =
-        (salesByDate[date] || 0) + s.totalAmount;
+      const d = s.createdAt?.toISOString().split("T")[0];
+      if (d) salesByDate[d] = (salesByDate[d] || 0) + (s.totalAmount || 0);
     });
-
     expenses.forEach((e) => {
-      const date = e.date.toISOString().split("T")[0];
-      expensesByDate[date] =
-        (expensesByDate[date] || 0) + e.amount;
+      const d = e.createdAt?.toISOString().split("T")[0];
+      if (d) expensesByDate[d] = (expensesByDate[d] || 0) + (e.amount || 0);
     });
 
     const allDates = new Set([
@@ -46,199 +90,197 @@ export const getReports = async (req, res, next) => {
       ...Object.keys(expensesByDate),
     ]);
 
-    const timeSeries = Array.from(allDates)
-      .sort()
-      .map((date) => ({
-        date,
-        sales: salesByDate[date] || 0,
-        expenses: expensesByDate[date] || 0,
-        profit:
-          (salesByDate[date] || 0) -
-          (expensesByDate[date] || 0),
-      }));
+    const timeSeries = Array.from(allDates).sort().map((date) => ({
+      date,
+      sales:    salesByDate[date]    || 0,
+      income:   salesByDate[date]    || 0,   // IncomeExpenseChart compat
+      expenses: expensesByDate[date] || 0,
+      profit:   (salesByDate[date] || 0) - (expensesByDate[date] || 0),
+    }));
 
-    /* ================= CATEGORY BREAKDOWN (NEW) ================= */
+    /* ========== CATEGORY BREAKDOWN ========== */
     const categoryMap = {};
-
     expenses.forEach((e) => {
-      const category = e.category || "Other";
-      categoryMap[category] =
-        (categoryMap[category] || 0) + e.amount;
+      const cat = e.category || "Other";
+      categoryMap[cat] = (categoryMap[cat] || 0) + (e.amount || 0);
+    });
+    const categoryData = Object.entries(categoryMap).map(([category, amount]) => ({
+      category,
+      amount,
+    }));
+
+    /* ========== TOP PRODUCTS (for TopProductsChart) ========== */
+    const productMap = {};
+    sales.forEach((s) => {
+      const name = s.productName || "Unknown";
+      if (!productMap[name]) productMap[name] = { name, unitsSold: 0, revenue: 0 };
+      productMap[name].unitsSold += s.quantity || 1;
+      productMap[name].revenue   += s.totalAmount || 0;
     });
 
-    const categoryData = Object.entries(categoryMap).map(
-      ([category, amount]) => ({
-        category,
-        amount,
-      })
-    );
+    const topProducts = Object.values(productMap)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
 
-    /* ================= TRANSACTIONS ================= */
-    const transactions = [
+    /* ========== PRODUCT-WISE DETAIL TABLE ========== */
+    // Same data as topProducts but ALL products, not just top 5
+    const productWise = Object.values(productMap)
+      .sort((a, b) => b.revenue - a.revenue);
+
+    /* ========== TRANSACTIONS ========== */
+    let allTransactions = [
       ...sales.map((s) => ({
-        id: s._id,
-        date: s.soldAt.toISOString().split("T")[0],
-        description: s.productName,
-        amount: s.totalAmount,
-        type: "sale",
-        paymentMode: s.paymentType,
-        category: "Sales",
-        createdBy: s.createdBy?.name || "System",
+        id:          s._id,
+        date:        s.createdAt?.toISOString().split("T")[0] || "",
+        description: s.productName || "",
+        amount:      s.totalAmount || 0,
+        type:        "sale",
+        paymentMode: s.paymentType || s.paymentMode || "—",
+        category:    "Sales",
+        createdBy:   s.createdBy?.name || "System",
       })),
       ...expenses.map((e) => ({
-        id: e._id,
-        date: e.date.toISOString().split("T")[0],
-        description: e.description,
-        amount: e.amount,
-        type: "expense",
-        paymentMode: e.paymentMode,
-        category: e.category,
-        createdBy: e.createdBy?.name || "System",
+        id:          e._id,
+        date:        e.createdAt?.toISOString().split("T")[0] || "",
+        description: e.description || "",
+        amount:      e.amount || 0,
+        type:        "expense",
+        paymentMode: e.paymentMode || "—",
+        category:    e.category || "Other",
+        createdBy:   e.createdBy?.name || "System",
       })),
     ];
 
-    /* ================= RESPONSE ================= */
+    /* ---- Filter by reportType ---- */
+    if (reportType === "sales") {
+      allTransactions = allTransactions.filter((t) => t.type === "sale");
+    } else if (reportType === "expense") {
+      allTransactions = allTransactions.filter((t) => t.type === "expense");
+    }
+
+    /* ---- Sort ---- */
+    allTransactions.sort((a, b) => {
+      let A = a[sortColumn], B = b[sortColumn];
+      if (sortColumn === "date")   { A = new Date(A); B = new Date(B); }
+      if (sortColumn === "amount") { A = Number(A);   B = Number(B);   }
+      if (A < B) return sortDirection === "asc" ? -1 : 1;
+      if (A > B) return sortDirection === "asc" ?  1 : -1;
+      return 0;
+    });
+
+    /* ---- Paginate ---- */
+    const PAGE_SIZE    = 15;
+    const pageNum      = Math.max(1, parseInt(page));
+    const totalPages   = Math.max(1, Math.ceil(allTransactions.length / PAGE_SIZE));
+    const transactions = allTransactions.slice(
+      (pageNum - 1) * PAGE_SIZE,
+      pageNum * PAGE_SIZE
+    );
+
+    /* ========== ALERTS ========== */
+    let alerts = [];
+    try {
+      const [lowStock, highExpense] = await Promise.all([
+        alertService.getLowStockAlerts(userId),
+        alertService.getHighExpenseAlerts(userId),
+      ]);
+      alerts = [...lowStock, ...highExpense];
+    } catch (e) {
+      console.warn("Alerts skipped:", e.message);
+    }
+
+    /* ========== AI INSIGHTS (optional) ========== */
+    let aiInsights = null;
+    try {
+      const { generateDashboardInsights } = await import(
+        "../services/aiDashboard.service.js"
+      );
+      aiInsights = await generateDashboardInsights(timeSeries);
+    } catch (e) {
+      console.warn("AI skipped:", e.message);
+    }
+
+    /* ========== RESPONSE ========== */
     res.json({
       summary: {
         totalSales,
         totalExpenses,
-        netProfit: totalSales - totalExpenses,
-        transactionCount: transactions.length,
-        salesTrend: 0,
-        expensesTrend: 0,
-        profitTrend: 0,
+        netProfit:        totalSales - totalExpenses,
+        currentProfit:    totalSales - totalExpenses,
+        pendingPayments:  0,
+        transactionCount: allTransactions.length,
+        salesTrend:       0,
+        expensesTrend:    0,
+        profitTrend:      0,
+        pendingTrend:     0,
       },
       timeSeries,
-      categoryData, // ✅ NOW FILLED
+      categoryData,
       transactions,
-      totalPages: 1,
+      totalPages,
+      topProducts,
+      productWise,   // ← NEW
+      alerts,
+      aiInsights,
     });
   } catch (err) {
     next(err);
   }
 };
-
-
-
 
 /* =========================================================
-   EXISTING ENDPOINTS (UNCHANGED)
+   POST /api/reports/export/:type
    ========================================================= */
-
-/**
- * GET /api/reports/summary
- */
-export const getReportSummary = async (req, res, next) => {
-  try {
-    const salesAgg = await Sale.aggregate([
-      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-    ]);
-
-    const expenseAgg = await Expense.aggregate([
-      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-    ]);
-
-    const totalSales = salesAgg[0]?.total || 0;
-    const totalExpenses = expenseAgg[0]?.total || 0;
-
-    res.json({
-      totalSales,
-      totalExpenses,
-      netProfit: totalSales - totalExpenses,
-      transactionCount:
-        (salesAgg[0]?.count || 0) + (expenseAgg[0]?.count || 0),
-      salesTrend: 0,
-      expensesTrend: 0,
-      profitTrend: 0,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * GET /api/reports/timeseries
- */
-export const getTimeSeriesData = async (req, res, next) => {
-  try {
-    const sales = await Sale.find({}, "date amount");
-    const expenses = await Expense.find({}, "date amount");
-
-    res.json({ sales, expenses });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * GET /api/reports/transactions
- */
-export const getTransactions = async (req, res, next) => {
-  try {
-    const sales = await Sale.find().populate("createdBy", "name role");
-    const expenses = await Expense.find().populate("createdBy", "name role");
-
-    const transactions = [
-      ...sales.map((s) => ({
-        id: s._id,
-        date: s.date,
-        description: s.description,
-        amount: s.amount,
-        type: "sale",
-        paymentMode: s.paymentMode,
-        category: s.category,
-        createdBy: s.createdBy?.name || "System",
-      })),
-      ...expenses.map((e) => ({
-        id: e._id,
-        date: e.date,
-        description: e.description,
-        amount: e.amount,
-        type: "expense",
-        paymentMode: e.paymentMode,
-        category: e.category,
-        createdBy: e.createdBy?.name || "System",
-      })),
-    ];
-
-    res.json(transactions);
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * POST /api/reports/export/:type
- */
 export const exportReports = async (req, res, next) => {
   try {
-    const { type } = req.params;
+    const userId    = req.user?._id || req.user?.id;
+    const { type }  = req.params;
+    const { dateRange = "this-month", reportType = "sales" } = req.query;
 
-    const sales = await Sale.find();
-    const expenses = await Expense.find();
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const dateFilter   = buildDateFilter(dateRange);
+    const hasDate      = Object.keys(dateFilter).length > 0;
 
-    const data = [
+    const match = {
+      createdBy: userObjectId,
+      ...(hasDate && { createdAt: dateFilter }),
+    };
+
+    const [sales, expenses] = await Promise.all([
+      Sale.find(match),
+      Expense.find(match),
+    ]);
+
+    let data = [
       ...sales.map((s) => ({
-        date: s.soldAt.toISOString().split("T")[0],
-        description: s.productName,
-        amount: s.totalAmount,
-        type: "Sale",
+        Date:           s.createdAt?.toISOString().split("T")[0] || "",
+        Description:    s.productName || "",
+        Amount:         s.totalAmount || 0,
+        Type:           "Sale",
+        "Payment Mode": s.paymentType || s.paymentMode || "—",
+        Category:       "Sales",
       })),
       ...expenses.map((e) => ({
-        date: e.date.toISOString().split("T")[0],
-        description: e.description,
-        amount: e.amount,
-        type: "Expense",
+        Date:           e.createdAt?.toISOString().split("T")[0] || "",
+        Description:    e.description || "",
+        Amount:         e.amount || 0,
+        Type:           "Expense",
+        "Payment Mode": e.paymentMode || "—",
+        Category:       e.category || "Other",
       })),
     ];
 
-    if (type === "csv") return exportCSV(res, data);
+    if (reportType === "sales")   data = data.filter((d) => d.Type === "Sale");
+    if (reportType === "expense") data = data.filter((d) => d.Type === "Expense");
+
+    data.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+
+    if (type === "csv")   return exportCSV(res, data);
     if (type === "excel") return exportExcel(res, data);
-    if (type === "pdf") return exportPDF(res, data);
+    if (type === "pdf")   return exportPDF(res, data);
 
     res.status(400).json({ message: "Invalid export type" });
   } catch (err) {
     next(err);
   }
 };
-

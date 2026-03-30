@@ -1,39 +1,32 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Wallet, PiggyBank, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Wallet, BarChart2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const reportTypes = [
-  { id: "sales", label: "Sales Report", icon: TrendingUp },
-  { id: "expense", label: "Expense Report", icon: Wallet },
-  { id: "profit", label: "Profit Report", icon: PiggyBank },
-  { id: "combined", label: "Combined Report", icon: FileText },
+const TYPES = [
+  { id: "sales",    label: "Sales Report",    icon: TrendingUp },
+  { id: "expense",  label: "Expense Report",  icon: Wallet     },
+  { id: "combined", label: "Combined Report", icon: BarChart2  },
 ];
 
 const ReportTypeSelector = ({ activeType, onTypeChange }) => {
   return (
-    <div className="w-full">
-      <Tabs
-        value={activeType}
-        onValueChange={onTypeChange}
-        className="w-full"
-      >
-        <TabsList className="w-full h-auto p-1.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl grid grid-cols-2 lg:grid-cols-4 gap-2">
-          {reportTypes.map((type) => {
-            const Icon = type.icon;
-            return (
-              <TabsTrigger
-                key={type.id}
-                value={type.id}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-white/70 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/20 data-[state=active]:to-secondary/20 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/30 transition-all duration-300 hover:bg-white/5"
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                  {type.label}
-                </span>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-      </Tabs>
+    <div className="flex flex-wrap gap-3">
+      {TYPES.map(({ id, label, icon: Icon }) => (
+        <Button
+          key={id}
+          variant="ghost"
+          onClick={() => onTypeChange(id)}
+          className={cn(
+            "h-10 px-6 rounded-xl border text-sm font-medium transition-all gap-2",
+            activeType === id
+              ? "bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border-primary/30"
+              : "text-white/60 border-white/10 hover:bg-white/5 hover:text-white"
+          )}
+        >
+          <Icon className="w-4 h-4" />
+          {label}
+        </Button>
+      ))}
     </div>
   );
 };

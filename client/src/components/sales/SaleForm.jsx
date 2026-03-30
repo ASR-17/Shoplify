@@ -20,7 +20,7 @@ const paymentTypes = [
 ];
 
 const SaleForm = ({
-  formData = {},            // ✅ DEFAULT SAFETY
+  formData = {},
   setFormData,
   onSubmit,
   submitLabel,
@@ -41,7 +41,6 @@ const SaleForm = ({
         setLoadingProducts(false);
       }
     };
-
     fetchProducts();
   }, []);
 
@@ -78,9 +77,14 @@ const SaleForm = ({
 
           <Select
             value={formData.productId ?? ""}
-            onValueChange={(value) =>
-              setFormData({ ...formData, productId: value })
-            }
+            onValueChange={(value) => {
+              const selected = products.find((p) => p._id === value);
+              setFormData({
+                ...formData,
+                productId: value,
+                pricePerItem: selected?.sellingPrice ?? "", // ✅ auto-fill price
+              });
+            }}
             disabled={loadingProducts}
           >
             <SelectTrigger className="bg-white/5 border-white/20">
@@ -110,15 +114,13 @@ const SaleForm = ({
             required
           />
 
+          {/* ✅ Read-only, auto-filled from product selection */}
           <Input
             type="number"
-            min="0"
             placeholder="Price per item"
             value={formData.pricePerItem ?? ""}
-            onChange={(e) =>
-              setFormData({ ...formData, pricePerItem: e.target.value })
-            }
-            required
+            readOnly
+            className="bg-white/5 border-white/20 cursor-not-allowed opacity-70"
           />
         </div>
 
