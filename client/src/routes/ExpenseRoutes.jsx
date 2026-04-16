@@ -4,14 +4,14 @@ import AddExpense from "@/pages/expenses/AddExpense";
 import EditExpense from "@/pages/expenses/EditExpense";
 import PrivateRoute from "@/components/auth/PrivateRoute";
 
-const ExpenseRoutes = ({ isAdmin }) => {
+const ExpenseRoutes = () => {
   return (
     <Routes>
       <Route
         path="/"
         element={
           <PrivateRoute>
-            <ExpensesSummary isAdmin={isAdmin} />
+            <ExpensesSummary />
           </PrivateRoute>
         }
       />
@@ -23,16 +23,14 @@ const ExpenseRoutes = ({ isAdmin }) => {
           </PrivateRoute>
         }
       />
-      {isAdmin && (
-        <Route
-          path="/edit/:id"
-          element={
-            <PrivateRoute>
-              <EditExpense />
-            </PrivateRoute>
-          }
-        />
-      )}
+      <Route
+        path="/edit/:id"
+        element={
+          <PrivateRoute>
+            <EditExpense />
+          </PrivateRoute>
+        }
+      />
     </Routes>
   );
 };

@@ -1,20 +1,37 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ReceiptUpload = ({ value, onChange }) => {
-  const [preview, setPreview] = useState(value);
+  const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef(null);
 
+  useEffect(() => {
+    if (typeof value === "string" && value) {
+      setPreview(value);
+    } else if (!value) {
+      setPreview(null);
+    }
+  }, [value]);
+
   const handleFile = (file) => {
-  if (file && file.type.startsWith("image/")) {
+    if (!file) return;
+
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowed.includes(file.type)) {
+      alert("Only JPG, PNG, WEBP, or GIF images are supported.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File must be under 5MB.");
+      return;
+    }
+
     setPreview(URL.createObjectURL(file));
-    onChange(file); // ✅ FILE OBJECT
-  }
-};
-
-
+    onChange(file);
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -36,7 +53,7 @@ const ReceiptUpload = ({ value, onChange }) => {
   };
 
   const handleRemove = () => {
-    setPreview(undefined);
+    setPreview(null);
     onChange(undefined);
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -50,6 +67,10 @@ const ReceiptUpload = ({ value, onChange }) => {
               src={preview}
               alt="Receipt preview"
               className="w-full h-48 object-cover"
+              onError={() => {
+                setPreview(null);
+                onChange(undefined);
+              }}
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Button
@@ -65,7 +86,7 @@ const ReceiptUpload = ({ value, onChange }) => {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            Click to view larger or hover to remove
+            Hover to remove
           </p>
         </div>
       ) : (
@@ -83,16 +104,12 @@ const ReceiptUpload = ({ value, onChange }) => {
           <input
             ref={inputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={handleChange}
             className="hidden"
           />
           <div className="flex flex-col items-center gap-3">
-            <div
-              className={`p-4 rounded-full ${
-                isDragging ? "bg-primary/20" : "bg-white/10"
-              }`}
-            >
+            <div className={`p-4 rounded-full ${isDragging ? "bg-primary/20" : "bg-white/10"}`}>
               {isDragging ? (
                 <ImageIcon className="w-8 h-8 text-primary" />
               ) : (

@@ -1,11 +1,10 @@
 import express from "express";
-import { getReports, exportReports } from "../controllers/report.controller.js";
+import { getAnalyticsSummary } from "../controllers/analytics.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 router.use(authMiddleware);
 
-router.get("/", getReports);
-router.post("/export/:type", exportReports);
+router.get("/summary", getAnalyticsSummary);
 
 export default router;

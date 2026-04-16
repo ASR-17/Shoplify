@@ -3,6 +3,7 @@ import {
   addExpense,
   getExpenses,
   getExpenseSummary,
+  getExpenseById, // ✅ ADDED
   updateExpense,
   deleteExpense,
 } from "../controllers/expense.controller.js";
@@ -13,10 +14,11 @@ import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
-router.post("/", auth, upload.single("receipt"), addExpense);
-router.get("/", auth, getExpenses);
-router.get("/summary", auth, getExpenseSummary);
-router.put("/:id", auth, adminOnly, upload.single("receipt"), updateExpense);
-router.delete("/:id", auth, adminOnly, deleteExpense);
+router.post("/",         auth, upload.single("receipt"), addExpense);
+router.get("/",          auth, getExpenses);
+router.get("/summary",   auth, getExpenseSummary);        // ✅ must be ABOVE /:id
+router.get("/:id",       auth, getExpenseById);           // ✅ ADDED
+router.put("/:id",       auth, adminOnly, upload.single("receipt"), updateExpense);
+router.delete("/:id",    auth, adminOnly, deleteExpense);
 
 export default router;

@@ -14,7 +14,7 @@ import { useSearchParams } from "react-router-dom";
 
 import StoreSettingsForm from "@/components/settings/StoreSettingsForm";
 import BrandingSettingsForm from "@/components/settings/BrandingSettingsForm";
-import AppearanceSettings from "@/components/settings/AppearanceSettings";
+// import AppearanceSettings from "@/components/settings/AppearanceSettings";
 import NotificationPreferencesForm from "@/components/settings/NotificationPreferencesForm";
 
 import { settingsApi } from "@/services/settingsApi";
@@ -139,13 +139,13 @@ const Settings = () => {
                 <span className="hidden sm:inline">Branding</span>
               </TabsTrigger>
 
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="appearance"
                 className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Palette className="w-4 h-4" />
                 <span className="hidden sm:inline">Appearance</span>
-              </TabsTrigger>
+              </TabsTrigger> */}
 
               <TabsTrigger
                 value="notifications"
@@ -178,10 +178,10 @@ const Settings = () => {
               )}
             </TabsContent>
 
-            {/* Appearance */}
+            {/* Appearance
             <TabsContent value="appearance" className="space-y-6 mt-6">
               <AppearanceSettings />
-            </TabsContent>
+            </TabsContent> */}
 
             {/* ✅ Notifications (UPDATED ONLY THIS PART) */}
             <TabsContent value="notifications" className="space-y-6 mt-6">

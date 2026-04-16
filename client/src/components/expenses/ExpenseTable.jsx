@@ -11,14 +11,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExpenseImageModal from "./ExpenseImageModal";
-
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell,
+  TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   AlertDialog,
@@ -31,12 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useState } from "react";
 
 const categoryIcons = {
@@ -71,9 +60,7 @@ const ExpenseTable = ({
 
   const sortedExpenses = [...expenses].sort((a, b) => {
     if (sortField === "amount") {
-      return sortDirection === "asc"
-        ? a.amount - b.amount
-        : b.amount - a.amount;
+      return sortDirection === "asc" ? a.amount - b.amount : b.amount - a.amount;
     }
     if (sortField === "date") {
       return sortDirection === "asc"
@@ -91,12 +78,8 @@ const ExpenseTable = ({
         <div className="p-4 rounded-full bg-white/5 inline-block mb-4">
           <Package className="w-12 h-12 text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">
-          No Expenses Found
-        </h3>
-        <p className="text-muted-foreground">
-          Start adding expenses to see them here.
-        </p>
+        <h3 className="text-xl font-semibold text-foreground mb-2">No Expenses Found</h3>
+        <p className="text-muted-foreground">Start adding expenses to see them here.</p>
       </div>
     );
   }
@@ -129,14 +112,13 @@ const ExpenseTable = ({
           <TableBody>
             {sortedExpenses.map((expense) => {
               const Icon = categoryIcons[expense.category] || MoreHorizontal;
+              const expenseId = expense._id || expense.id;
 
               return (
-                <TableRow
-                  key={expense._id || expense.id}
-                  className="border-white/10 hover:bg-white/5"
-                >
+                <TableRow key={expenseId} className="border-white/10 hover:bg-white/5">
                   <TableCell>
-                    {new Date(expense.date).toLocaleDateString("en-IN")}
+                    {/* ✅ FIX: timeZone UTC prevents day shift in IST */}
+                    {new Date(expense.date).toLocaleDateString("en-IN", { timeZone: "UTC" })}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -153,13 +135,11 @@ const ExpenseTable = ({
                     {expense.description}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        expense.addedBy === "Admin"
-                          ? "bg-primary/20 text-primary"
-                          : "bg-secondary/20 text-secondary"
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      expense.addedBy === "Admin"
+                        ? "bg-primary/20 text-primary"
+                        : "bg-secondary/20 text-secondary"
+                    }`}>
                       {expense.addedBy}
                     </span>
                   </TableCell>
@@ -172,10 +152,9 @@ const ExpenseTable = ({
                       >
                         <FileImage className="w-4 h-4 text-primary" />
                       </Button>
-                    ) : (
-                      "—"
-                    )}
+                    ) : "—"}
                   </TableCell>
+
                   {isAdmin && (
                     <TableCell className="text-right">
                       <Button
@@ -185,13 +164,34 @@ const ExpenseTable = ({
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onDelete(expense._id || expense.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+
+                      {/* ✅ FIX: delete now has a confirmation dialog */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost">
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-card border border-white/20">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-muted-foreground">
+                              This will permanently delete this expense record. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-white/5 border-white/20 hover:bg-white/10">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => onDelete(expenseId)}
+                              className="bg-destructive hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   )}
                 </TableRow>
@@ -206,18 +206,10 @@ const ExpenseTable = ({
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
+              <Button size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
                 Previous
               </Button>
-              <Button
-                size="sm"
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
+              <Button size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
                 Next
               </Button>
             </div>
@@ -225,13 +217,11 @@ const ExpenseTable = ({
         )}
       </div>
 
-      {/* Image Modal */}
       <ExpenseImageModal
-  open={!!selectedImage}
-  imageUrl={selectedImage}
-  onClose={() => setSelectedImage(null)}
-/>
-
+        open={!!selectedImage}
+        imageUrl={selectedImage}
+        onClose={() => setSelectedImage(null)}
+      />
     </>
   );
 };

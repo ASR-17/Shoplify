@@ -2,20 +2,14 @@ import Expense from "../models/expense.model.js";
 import { getDateRanges } from "../utils/expenseSummary.js";
 
 // ➕ Add Expense
-
 export const addExpense = async (req, res) => {
   try {
     const expense = await Expense.create({
       category: req.body.category,
       amount: Number(req.body.amount),
       description: req.body.description,
-
-      // ✅ FORCE REAL DATE
       date: new Date(req.body.date),
-
-      // ✅ CLOUDINARY URL
       receiptUrl: req.file?.path || null,
-
       addedBy: req.user.role === "admin" ? "Admin" : "Employee",
       createdBy: req.user.id,
     });
@@ -27,14 +21,24 @@ export const addExpense = async (req, res) => {
   }
 };
 
-
-
-
-// 📄 Get Expenses
+// 📄 Get All Expenses
 export const getExpenses = async (req, res) => {
   try {
     const expenses = await Expense.find().sort({ date: -1 });
     res.json(expenses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 🔍 Get Single Expense by ID ✅ ADDED
+export const getExpenseById = async (req, res) => {
+  try {
+    const expense = await Expense.findById(req.params.id);
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+    res.json(expense);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -90,17 +94,32 @@ export const getExpenseSummary = async (req, res) => {
 // ✏️ Update Expense (Admin)
 export const updateExpense = async (req, res) => {
   try {
+    // ✅ FIX: guard against null (expense not found)
+    const existing = await Expense.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    const updateData = {
+      category: req.body.category,
+      amount: Number(req.body.amount),
+      description: req.body.description,
+      date: new Date(req.body.date), // ✅ ensure proper Date object
+      receiptUrl:
+        req.file?.path ||
+        req.body.existingReceipt ||
+        existing.receiptUrl,
+    };
+
     const updated = await Expense.findByIdAndUpdate(
       req.params.id,
-      {
-        ...req.body,
-        receiptUrl: req.file?.path,
-      },
+      updateData,
       { new: true }
     );
 
     res.json(updated);
   } catch (error) {
+    console.error("UPDATE ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };

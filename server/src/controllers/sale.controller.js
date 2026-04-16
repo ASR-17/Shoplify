@@ -15,8 +15,8 @@ import {
 ================================ */
 export const createSale = async (req, res) => {
   try {
-    const { productId, quantity, customerName, paymentType } = req.body;
-
+    const { productId, customerName, paymentType } = req.body;
+    const quantity = Number(req.body.quantity);
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({

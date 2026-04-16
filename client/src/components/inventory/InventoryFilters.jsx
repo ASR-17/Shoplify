@@ -46,11 +46,10 @@ const InventoryFilters = ({
             <SelectContent className="bg-card border-white/20">
               <SelectItem value="all">All Categories</SelectItem>
               {categories.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

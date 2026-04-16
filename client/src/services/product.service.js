@@ -3,13 +3,13 @@ import API from "@/services/api";
 /* GET ALL PRODUCTS */
 export const getProducts = async () => {
   const res = await API.get("/products");
-  return res.data.data; // important: matches backend response
+  return res.data.data;
 };
 
 /* GET SINGLE PRODUCT */
 export const getProductById = async (id) => {
   const products = await getProducts();
-  products(products)
+  return products.find((p) => p._id === id);
 };
 
 /* ADD PRODUCT */
@@ -28,5 +28,6 @@ export const updateProduct = async (id, data) => {
 export const updateStock = ({ productId, adjustment }) =>
   API.patch(`/products/${productId}/quantity`, {
     adjustment: Number(adjustment),
-});
+  });
 
+  
